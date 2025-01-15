@@ -1,1 +1,3 @@
-console.log("Hello via Bun!");
+const { token } = require("./config.json");
+
+console.log(token);
