@@ -1,15 +1,23 @@
 # jakobot
 
-To install dependencies:
+Discord bot for having fun with the blindern boys in the EA discord server
+
+## How to run bot
+
+### Prepare necessary environment variables
+
+It is necessary to define token, clientId and guildId in a environment configuration file.
+
+### Install dependencies
 
 ```bash
 bun install
 ```
 
-To run:
+### Run application
 
 ```bash
 bun run index.js
 ```
 
-This project was created using `bun init` in bun v1.0.23. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+
