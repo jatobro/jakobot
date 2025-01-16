@@ -1,11 +1,6 @@
 {
   "name": "jakobot",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "eslint": "^9.18.0"
-  },
+  "module": "index.js",
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
