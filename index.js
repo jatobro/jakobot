@@ -3,6 +3,7 @@ const Bandle = require("./models/bandleModel");
 
 const mongoose = require("mongoose");
 const { Client, Events, GatewayIntentBits } = require("discord.js");
+const { Cron } = require("croner");
 
 dbConnect();
 
@@ -15,12 +16,38 @@ const client = new Client({
   ],
 });
 
-client.once(Events.ClientReady, (readyClient) => {
-  console.log(`ready! logged in as ${readyClient.user.tag}`);
-});
-
 mongoose.connection.once("open", () => {
   console.log("connected to db");
+
+  let currentWinner = null;
+  let currentWinnerScore = null;
+
+  client.once(Events.ClientReady, (readyClient) => {
+    console.log(`ready! logged in as ${readyClient.user.tag}`);
+
+    // run every midnight
+    // eslint-disable-next-line no-unused-vars
+    const cron = new Cron("0 0 0 * * *", () => {
+      console.log("new day, resetting bandle participation status");
+
+      Bandle.updateMany({}, { hasParticipated: false }).then(() =>
+        console.log("bandle participation status reset")
+      );
+
+      const winner = Bandle.findOne({ username: currentWinner })
+        .then(() => console.log("winner found"))
+        .catch((err) => console.log(err));
+      Bandle.updateOne(
+        { username: currentWinner },
+        { wins: winner.wins + 1 }
+      ).then(() => console.log("win added to winner"));
+
+      const channel = client.channels.cache.get(Bun.env.BANDLE_ID);
+      channel.send(
+        `congratulations for winning the daily bandle challenge @${currentWinner}, you now have ${winner.wins} wins!`
+      );
+    });
+  });
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || message.channelId != Bun.env.BANDLE_ID) return;
@@ -34,6 +61,11 @@ mongoose.connection.once("open", () => {
     // calculate score
     const score = parseInt(message.content.split(" ")[2].split("/")[0]);
     console.log(`score: ${score}`);
+
+    if (!currentWinnerScore || score > currentWinnerScore) {
+      currentWinner = message.author.username;
+      currentWinnerScore = score;
+    }
 
     const bandle = await Bandle.findOne({
       username: message.author.username,
