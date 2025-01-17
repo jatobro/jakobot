@@ -1,26 +1,50 @@
+const fs = require("node:fs");
+const path = require("node:path");
+
+const mongoose = require("mongoose");
+const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
+const { Cron } = require("croner");
+
 const dbConnect = require("./db");
 const Bandle = require("./models/bandleModel");
 
-const mongoose = require("mongoose");
-const { Client, Events, GatewayIntentBits } = require("discord.js");
-const { Cron } = require("croner");
-
 dbConnect();
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent,
-  ],
-});
 
 mongoose.connection.once("open", () => {
   console.log("connected to db");
 
-  let currentWinner = null;
-  let currentWinnerScore = null;
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.MessageContent,
+    ],
+  });
+
+  client.commands = new Collection();
+
+  const foldersPath = path.join(__dirname, "commands");
+  const commandFolders = fs.readdirSync(foldersPath);
+
+  for (const folder of commandFolders) {
+    const commandsPath = path.join(foldersPath, folder);
+    const commandFiles = fs
+      .readdirSync(commandsPath)
+      .filter((file) => file.endsWith(".js"));
+    for (const file of commandFiles) {
+      const filePath = path.join(commandsPath, file);
+      const command = require(filePath);
+      // Set a new item in the Collection with the key as the command name and the value as the exported module
+      if ("data" in command && "execute" in command) {
+        client.commands.set(command.data.name, command);
+      } else {
+        console.log(
+          `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+        );
+      }
+    }
+  }
 
   client.once(Events.ClientReady, (readyClient) => {
     console.log(`ready! logged in as ${readyClient.user.tag}`);
@@ -33,20 +57,35 @@ mongoose.connection.once("open", () => {
       Bandle.updateMany({}, { hasParticipated: false }).then(() =>
         console.log("bandle participation status reset")
       );
-
-      const winner = Bandle.findOne({ username: currentWinner })
-        .then(() => console.log("winner found"))
-        .catch((err) => console.log(err));
-      Bandle.updateOne(
-        { username: currentWinner },
-        { wins: winner.wins + 1 }
-      ).then(() => console.log("win added to winner"));
-
-      const channel = client.channels.cache.get(Bun.env.BANDLE_ID);
-      channel.send(
-        `congratulations for winning the daily bandle challenge @${currentWinner}, you now have ${winner.wins} wins!`
-      );
     });
+  });
+
+  client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    const command = interaction.client.commands.get(interaction.commandName);
+
+    if (!command) {
+      console.error(`no command matching ${interaction.commandName} was found`);
+      return;
+    }
+
+    try {
+      await command.execute(interaction);
+    } catch (err) {
+      console.error(err);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: "there was an error while executing this command!",
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.reply({
+          content: "there was an error while executing this command!",
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
   });
 
   client.on(Events.MessageCreate, async (message) => {
@@ -61,11 +100,6 @@ mongoose.connection.once("open", () => {
     // calculate score
     const score = parseInt(message.content.split(" ")[2].split("/")[0]);
     console.log(`score: ${score}`);
-
-    if (!currentWinnerScore || score > currentWinnerScore) {
-      currentWinner = message.author.username;
-      currentWinnerScore = score;
-    }
 
     const bandle = await Bandle.findOne({
       username: message.author.username,
@@ -109,6 +143,6 @@ mongoose.connection.once("open", () => {
       `daily bandle score for ${message.author.displayName} registered`
     );
   });
-});
 
-client.login(Bun.env.TOKEN);
+  client.login(Bun.env.TOKEN);
+});
