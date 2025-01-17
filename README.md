@@ -6,7 +6,7 @@ Discord bot for having fun with the blindern boys in the EA discord server
 
 ### Prepare necessary environment variables
 
-It is necessary to define token, clientId and guildId in a environment configuration file.
+Define `TOKEN`, `CLIENT_ID` and `GUILD_ID` in environment configuration file.
 
 ### Install dependencies
 
@@ -19,5 +19,3 @@ bun install
 ```bash
 bun run index.js
 ```
-
-
