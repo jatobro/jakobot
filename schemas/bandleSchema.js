@@ -6,6 +6,8 @@ const bandleSchema = new Schema({
   averageScore: Number,
   wins: Number,
   hasParticipated: Boolean,
+  isWinning: Boolean,
+  todaysScore: Number,
 });
 
 module.exports = bandleSchema;

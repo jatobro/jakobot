@@ -51,12 +51,32 @@ mongoose.connection.once("open", () => {
 
     // run every midnight
     // eslint-disable-next-line no-unused-vars
-    const cron = new Cron("0 0 0 * * *", () => {
-      console.log("new day, resetting bandle participation status");
-
+    const cron = new Cron("0 0 0 * * *", async () => {
       Bandle.updateMany({}, { hasParticipated: false }).then(() =>
         console.log("bandle participation status reset")
       );
+
+      const winner = await Bandle.findOneAndUpdate(
+        { isWinning: true },
+        { $inc: { wins: 1 } }
+      );
+
+      const channel = await client.channels.fetch(Bun.env.BANDLE_ID);
+
+      if (!winner) {
+        await channel.send("no participants for todays bandle...");
+      } else {
+        await channel.send(
+          `congratulations to ${winner.username}, they now have ${
+            winner.wins + 1
+          } wins`
+        );
+
+        await Bandle.updateOne(
+          { username: winner.username },
+          { isWinning: false }
+        );
+      }
     });
   });
 
@@ -89,6 +109,10 @@ mongoose.connection.once("open", () => {
   });
 
   client.on(Events.MessageCreate, async (message) => {
+    if (message.author.username === "mysticflamexd") {
+      message.react("😂");
+    }
+
     if (message.author.bot || message.channelId != Bun.env.BANDLE_ID) return;
 
     console.log(`message sent to bandle channel by ${message.author.username}`);
@@ -98,45 +122,62 @@ mongoose.connection.once("open", () => {
     console.log(`bandle score posted by ${message.author.username}`);
 
     // calculate score
-    const score = parseInt(message.content.split(" ")[2].split("/")[0]);
-    console.log(`score: ${score}`);
+    try {
+      const score = parseInt(message.content.split(" ")[2].split("/")[0]);
 
-    const bandle = await Bandle.findOne({
-      username: message.author.username,
-    });
+      console.log(`score: ${score}`);
 
-    if (!bandle) {
-      const newBandle = new Bandle({
+      const bandle = await Bandle.findOne({
         username: message.author.username,
-        participations: 1,
-        averageScore: score,
-        wins: 0,
-        hasParticipated: true,
       });
 
-      newBandle.save().then(() => console.log("new bandle participant"));
-    } else {
-      if (bandle.hasParticipated) {
-        message.reply(
-          `you have already participated in the daily bandle challenge`
+      const currentWinner = await Bandle.findOne({ isWinning: true });
+
+      const isNewWinner = currentWinner
+        ? score <= currentWinner.todaysScore
+          ? false
+          : true
+        : true;
+
+      if (!bandle) {
+        const newBandle = new Bandle({
+          username: message.author.username,
+          participations: 1,
+          averageScore: score,
+          wins: 0,
+          hasParticipated: true,
+          isWinning: isNewWinner,
+          todaysScore: score,
+        });
+
+        newBandle.save().then(() => console.log("new bandle participant"));
+      } else {
+        if (bandle.hasParticipated) {
+          message.reply(
+            `you have already participated in the daily bandle challenge`
+          );
+          return;
+        }
+
+        const newParticipations = bandle.participations + 1;
+        const newAverageScore =
+          (bandle.averageScore * bandle.participations + score) /
+          newParticipations;
+
+        const updates = {
+          participations: newParticipations,
+          averageScore: newAverageScore,
+          hasParticipated: true,
+          isWinning: isNewWinner,
+          todaysScore: score,
+        };
+
+        Bandle.updateOne({ username: message.author.username }, updates).then(
+          () => console.log("existing user bandle participation registered")
         );
-        return;
       }
-
-      const newParticipations = bandle.participations + 1;
-      const newAverageScore =
-        (bandle.averageScore * bandle.participations + score) /
-        newParticipations;
-
-      const updates = {
-        participations: newParticipations,
-        averageScore: newAverageScore,
-        hasParticipated: true,
-      };
-
-      Bandle.updateOne({ username: message.author.username }, updates).then(
-        () => console.log("existing user bandle participation registered")
-      );
+    } catch (err) {
+      console.error(err);
     }
 
     message.reply(
