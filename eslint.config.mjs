@@ -7,7 +7,7 @@ export default [
     files: ["**/*.js"],
     languageOptions: {
       sourceType: "commonjs",
-      globals: { Bun: false, __dirname: false, MessageFlags: false },
+      globals: { process: false, __dirname: false, MessageFlags: false },
     },
   },
   { languageOptions: { globals: globals.browser } },

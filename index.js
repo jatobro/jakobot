@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { Client, Events, GatewayIntentBits } = require("discord.js");
 const { Cron } = require("croner");
+require("dotenv").config();
 
 const dbConnect = require("./dbConnect");
 const loadCommandFiles = require("./loadCommandFiles");
@@ -38,7 +39,7 @@ mongoose.connection.once("open", () => {
         { $inc: { wins: 1 } }
       );
 
-      const channel = await client.channels.fetch(Bun.env.BANDLE_ID);
+      const channel = await client.channels.fetch(process.env.BANDLE_ID);
 
       if (!winner) {
         await channel.send("no participants for todays bandle...");
@@ -93,7 +94,7 @@ mongoose.connection.once("open", () => {
     if (message.author.bot) return;
 
     if (
-      message.channelId != Bun.env.BANDLE_ID ||
+      message.channelId != process.env.BANDLE_ID ||
       !/^Bandle #\d+ [1-6]\/6/.test(message.content)
     )
       return;
@@ -161,5 +162,5 @@ mongoose.connection.once("open", () => {
     );
   });
 
-  client.login(Bun.env.TOKEN);
+  client.login(process.env.TOKEN);
 });

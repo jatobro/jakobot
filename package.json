@@ -1,9 +1,15 @@
 {
   "name": "jakobot",
-  "module": "index.js",
+  "version": "1.0.0",
+  "description": "discord bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node deploy-commands.js && node index.js"
+  },
   "dependencies": {
     "croner": "^9.0.0",
     "discord.js": "^14.17.3",
+    "dotenv": "^16.4.7",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.5"
   },
