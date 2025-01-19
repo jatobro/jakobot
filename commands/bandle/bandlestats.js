@@ -9,16 +9,21 @@ module.exports = {
   async execute(interaction) {
     console.log("bandlestats executed");
 
-    let replyString = null;
-    const bandles = (await Bandle.find({}).sort([["wins", "descending"]])).map(
-      (bandle) =>
-        `${bandle.username}: ${bandle.participations} participations, ${bandle.averageScore} avg score, ${bandle.wins} wins`
-    );
+    const bandles = await Bandle.find({}).sort([["wins", "descending"]]);
 
-    replyString = bandles.join("\n");
-
-    if (replyString) {
-      await interaction.reply(replyString);
+    if (bandles.length == 0) {
+      interaction.reply("**no data avaliable**");
     }
+
+    let table = "| User | Wins | Participations | Average Score |\n\n";
+
+    bandles.forEach((bandle) => {
+      const { username, wins, participations, averageScore } = bandle; // Adjust fields based on your schema
+      table += `| ${username} | ${String(wins)} | ${String(
+        participations
+      )} | ${String(averageScore)} |\n`;
+    });
+
+    await interaction.reply(`**Bandle Statistics**\n\`\`\`${table}\`\`\``);
   },
 };

@@ -3,8 +3,8 @@ const { Client, Events, GatewayIntentBits } = require("discord.js");
 const { Cron } = require("croner");
 require("dotenv").config();
 
-const dbConnect = require("./dbConnect");
-const loadCommandFiles = require("./loadCommandFiles");
+const dbConnect = require("./utils/db-connect");
+const loadCommandFiles = require("./utils/load-command-files");
 
 const Bandle = require("./models/bandleModel");
 
@@ -24,8 +24,15 @@ mongoose.connection.once("open", () => {
 
   loadCommandFiles(client);
 
-  client.once(Events.ClientReady, (readyClient) => {
+  client.once(Events.ClientReady, async (readyClient) => {
     console.log(`ready! logged in as ${readyClient.user.tag}`);
+
+    try {
+      const channel = await client.channels.fetch(process.env.BOT_ID);
+      channel.send("yoyoyo im backk boiiis");
+    } catch (err) {
+      console.error(err);
+    }
 
     // run every midnight
     // eslint-disable-next-line no-unused-vars
