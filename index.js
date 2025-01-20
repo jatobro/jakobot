@@ -50,12 +50,29 @@ mongoose.connection.once("open", () => {
           } wins`
         );
 
-        await Bandle.updateOne(
-          { username: winner.username },
-          { isWinning: false }
+        const winner = await Bandle.findOneAndUpdate(
+          { isWinning: true },
+          { $inc: { wins: 1 } }
         );
+
+        const channel = await client.channels.fetch(process.env.BANDLE_ID);
+
+        if (!winner) {
+          await channel.send("no participants for todays bandle...");
+        } else {
+          await channel.send(
+            `congratulations to ${winner.username}, they now have ${
+              winner.wins + 1
+            } wins`
+          );
+
+          await Bandle.updateOne(
+            { username: winner.username },
+            { isWinning: false }
+          );
+        }
       }
-    });
+    );
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
