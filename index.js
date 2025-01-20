@@ -27,42 +27,39 @@ mongoose.connection.once("open", () => {
   client.once(Events.ClientReady, async (readyClient) => {
     console.log(`ready! logged in as ${readyClient.user.tag}`);
 
-    try {
-      const channel = await client.channels.fetch(process.env.BOT_ID);
-      channel.send("yoyoyo im backk boiiis");
-    } catch (err) {
-      console.error(err);
-    }
-
     // run every midnight
     // eslint-disable-next-line no-unused-vars
-    const cron = new Cron("0 0 0 * * *", async () => {
-      Bandle.updateMany({}, { hasParticipated: false }).then(() =>
-        console.log("bandle participation status reset")
-      );
-
-      const winner = await Bandle.findOneAndUpdate(
-        { isWinning: true },
-        { $inc: { wins: 1 } }
-      );
-
-      const channel = await client.channels.fetch(process.env.BANDLE_ID);
-
-      if (!winner) {
-        await channel.send("no participants for todays bandle...");
-      } else {
-        await channel.send(
-          `congratulations to ${winner.username}, they now have ${
-            winner.wins + 1
-          } wins`
+    const cron = new Cron(
+      "0 0 0 * * *",
+      { timezone: "Europe/Oslo" },
+      async () => {
+        Bandle.updateMany({}, { hasParticipated: false }).then(() =>
+          console.log("bandle participation status reset")
         );
 
-        await Bandle.updateOne(
-          { username: winner.username },
-          { isWinning: false }
+        const winner = await Bandle.findOneAndUpdate(
+          { isWinning: true },
+          { $inc: { wins: 1 } }
         );
+
+        const channel = await client.channels.fetch(process.env.BANDLE_ID);
+
+        if (!winner) {
+          await channel.send("no participants for todays bandle...");
+        } else {
+          await channel.send(
+            `congratulations to ${winner.username}, they now have ${
+              winner.wins + 1
+            } wins`
+          );
+
+          await Bandle.updateOne(
+            { username: winner.username },
+            { isWinning: false }
+          );
+        }
       }
-    });
+    );
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
