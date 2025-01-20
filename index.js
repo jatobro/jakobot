@@ -27,17 +27,10 @@ mongoose.connection.once("open", () => {
   client.once(Events.ClientReady, async (readyClient) => {
     console.log(`ready! logged in as ${readyClient.user.tag}`);
 
-    try {
-      const channel = await client.channels.fetch(process.env.BOT_ID);
-      channel.send("yoyoyo im backk boiiis");
-    } catch (err) {
-      console.error(err);
-    }
-
-    // run every midnight
+    // run every midnightnp
     // eslint-disable-next-line no-unused-vars
-    const cron = new Cron("0 0 0 * * *", async () => {
-      Bandle.updateMany({}, { hasParticipated: false }).then(() =>
+    const cron = new Cron("0 23 * * *", async () => {
+      await Bandle.updateMany({}, { hasParticipated: false }).then(() =>
         console.log("bandle participation status reset")
       );
 
@@ -46,7 +39,7 @@ mongoose.connection.once("open", () => {
         { $inc: { wins: 1 } }
       );
 
-      const channel = await client.channels.fetch(process.env.BANDLE_ID);
+      const channel = await readyClient.channels.fetch(process.env.BANDLE_ID);
 
       if (!winner) {
         await channel.send("no participants for todays bandle...");
