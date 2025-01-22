@@ -21,7 +21,7 @@ module.exports = {
       const { username, wins, participations, averageScore } = bandle; // Adjust fields based on your schema
       table += `| ${username} | ${String(wins)} | ${String(
         participations
-      )} | ${String(averageScore)} |\n`;
+      )} | ${averageScore.toFixed(2)} |\n`;
     });
 
     await interaction.reply(`**Bandle Statistics**\n\`\`\`${table}\`\`\``);
