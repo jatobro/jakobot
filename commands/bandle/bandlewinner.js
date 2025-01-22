@@ -12,7 +12,9 @@ module.exports = {
     const winner = await Bandle.findOne({ isWinning: true });
 
     await interaction.reply(
-      `**${winner.username} is currently winning todays bandle**`
+      `**${
+        winner ? winner.username : "no one"
+      } is currently winning todays bandle**`
     );
   },
 };
