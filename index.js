@@ -95,7 +95,7 @@ mongoose.connection.once("open", () => {
 
     if (
       message.channelId != process.env.BANDLE_ID ||
-      !/^Bandle #\d+ [1-6|x]\/6\n.*\nFound: \d+\/\d+ \(\d+%\)\nCurrent Streak: \d+ \(max \d+\)\n#Bandle #Heardle #Wordle \n\nhttps:\/\/bandle\.app\/$/.test(
+      !/^Bandle #\d+ [1-6|x]\/6\n.*\nFound: \d+\/\d+ \(\d+(\.\d)?%\)\n(?:Current Streak: \d+ \(max \d+\)\n)?#Bandle #Heardle #Wordle \n\nhttps:\/\/bandle\.app\/$/.test(
         message.content
       )
     )
