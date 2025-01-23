@@ -11,11 +11,11 @@ Define variables such as `TOKEN`, `CLIENT_ID` and `GUILD_ID` in environment conf
 ### Install dependencies
 
 ```bash
-npm install
+bun install
 ```
 
 ### Run application
 
 ```bash
-npm run start
+bun run start
 ```
