@@ -50,11 +50,11 @@ mongoose.connection.once("open", () => {
           { username: winner.username },
           { isWinning: false }
         );
-
-        await Bandle.updateMany({}, { hasParticipated: false }).then(() =>
-          console.log("bandle participation status reset")
-        );
       }
+
+      await Bandle.updateMany({}, { hasParticipated: false }).then(() =>
+        console.log("bandle participation status reset")
+      );
     });
   });
 
@@ -118,6 +118,11 @@ mongoose.connection.once("open", () => {
         ? false
         : true
       : true;
+
+    if (isNewWinner) {
+      currentWinner.isWinning = false;
+      await currentWinner.save();
+    }
 
     if (!bandle) {
       const newBandle = new Bandle({
