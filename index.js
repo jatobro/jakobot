@@ -119,7 +119,7 @@ mongoose.connection.once("open", () => {
         : true
       : true;
 
-    if (isNewWinner) {
+    if (isNewWinner && currentWinner) {
       currentWinner.isWinning = false;
       await currentWinner.save();
     }
