@@ -13,6 +13,7 @@ module.exports = {
 
     if (bandles.length == 0) {
       interaction.reply("**no data avaliable**");
+      return;
     }
 
     let table = "| User | Wins | Participations | Average Score |\n\n";
